@@ -1,7 +1,8 @@
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: 640,
+    height: 320,
+    backgroundColor: 'rgba(0,0,0,0)',
     physics: {
         default: 'arcade',
         arcade: {
@@ -18,46 +19,39 @@ const config = {
 
 const game = new Phaser.Game(config);
 let player;
+let checkpoint;
 let cursors;
-let checkpoints;
 let score = 0;
 let scoreText;
+let passCode = prompt("Введите цифру для проверки:");
 
 function preload() {
     this.load.image('truck', 'assets/truck.png');
     this.load.image('checkpoint', 'assets/checkpoint.png');
+    this.load.image('fireworks', 'assets/fireworks.png');
 }
 
 function create() {
-    player = this.physics.add.sprite(400, 500, 'truck').setScale(0.5);
+    player = this.physics.add.sprite(100, 160, 'truck').setScale(0.5);
+    checkpoint = this.physics.add.sprite(500, 160, 'checkpoint').setScale(0.5);
+
     player.setCollideWorldBounds(true);
+    checkpoint.setCollideWorldBounds(true);
 
     cursors = this.input.keyboard.createCursorKeys();
 
-    checkpoints = this.physics.add.group({
-        key: 'checkpoint',
-        repeat: 5,
-        setXY: { x: 12, y: 100, stepX: 150 }
-    });
-
-    checkpoints.children.iterate(function (child) {
-        child.setVelocity(Phaser.Math.Between(-200, 200), 20);
-        child.setBounce(1);
-        child.setCollideWorldBounds(true);
-    });
-
-    this.physics.add.collider(player, checkpoints, hitCheckpoint, null, this);
-
-    scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+    this.physics.add.collider(player, checkpoint, hitCheckpoint, null, this);
 }
 
 function update() {
+    player.setVelocity(100, 0); // Грузовик движется вперед
+
     if (cursors.left.isDown) {
         player.setVelocityX(-160);
     } else if (cursors.right.isDown) {
         player.setVelocityX(160);
     } else {
-        player.setVelocityX(0);
+        player.setVelocityX(100);
     }
 
     if (cursors.up.isDown) {
@@ -70,7 +64,12 @@ function update() {
 }
 
 function hitCheckpoint(player, checkpoint) {
-    checkpoint.disableBody(true, true);
-    score += 10;
-    scoreText.setText('Score: ' + score);
+    if (passCode === "10") {
+        // Грузовик проезжает блокпост и появляется салют
+        this.add.sprite(player.x, player.y, 'fireworks').setScale(0.5);
+        player.setVelocityX(100);
+    } else {
+        // Грузовик разворачивается и едет в другую сторону
+        player.setVelocityX(-100);
+    }
 }
